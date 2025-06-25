@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlixMovie</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+    <script>
+        // পেইজ লোড হওয়ার আগেই থিম সেট করা হয়, যাতে থিম পরিবর্তন লক্ষ্য করা না যায়।
+        const theme = localStorage.getItem('flixMovieTheme') || 'dark';
+        if (theme === 'light') {
+            document.documentElement.classList.add('light-theme-body');
+        }
+    </script>
+    <style>
+    /* আপনার দেওয়া CSS কোডটি এখানে থাকবে। কোনো পরিবর্তনের প্রয়োজন নেই, এটি খুবই ভালো। */
+    :root {
+        --primary-color: #1ed760; --secondary-color: #ff4545; --background-color: #121212;
+        --surface-color: #1e1e1e; --text-color: #ffffff; --text-muted-color: #b3b3b3;
+        --border-color: #333; --font-family: 'Poppins', sans-serif;
+    }
+    html.light-theme-body {
+        --primary-color: #1db954; --secondary-color: #ff3030; --background-color: #f0f2f5;
+        --surface-color: #ffffff; --text-color: #1c1e21; --text-muted-color: #606770; --border-color: #ddd;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background-color: var(--background-color); color: var(--text-color); font-family: var(--font-family); transition: background-color 0.3s, color 0.3s; padding-bottom: 80px; }
+    #app-container { transition: filter 0.3s ease-in-out; }
+    #app-container.blur { filter: blur(5px) brightness(0.7); pointer-events: none; }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 1rem; background-color: var(--surface-color); position: sticky; top: 0; z-index: 99; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); }
+    .logo { font-size: 1.5rem; font-weight: 700; color: var(--primary-color); }
+    .logo span { color: var(--secondary-color); }
+    .icon-btn { background: none; border: none; color: var(--text-muted-color); font-size: 1.2rem; cursor: pointer; transition: color 0.2s; text-decoration: none; }
+    .header-right { display: flex; align-items: center; gap: 1rem; }
+    .sidenav { height: 100%; width: 0; position: fixed; z-index: 200; top: 0; left: 0; background-color: #111; overflow-x: hidden; transition: 0.5s; padding-top: 60px; }
+    .sidenav a { padding: 12px 15px 12px 32px; text-decoration: none; font-size: 1.2rem; color: #818181; display: block; transition: 0.3s; }
+    .sidenav a i { margin-right: 15px; width: 20px; text-align: center; }
+    .sidenav a:hover { color: var(--primary-color); }
+    .sidenav .closebtn { position: absolute; top: 0; right: 25px; font-size: 36px; }
+    main { padding: 0 1rem; }
+    .content-section { margin-top: 1.5rem; display: block; }
+    .content-section.hidden { display: none; }
+    .content-section h2 { font-size: 1.3rem; margin-bottom: 1rem; padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-color); }
+    .media-scroller { display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 1rem; scrollbar-width: thin; scrollbar-color: var(--primary-color) transparent; }
+    .media-scroller::-webkit-scrollbar { height: 5px; }
+    .media-scroller::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 10px; }
+    .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; }
+    .media-card { flex-shrink: 0; width: 150px; opacity: 0; animation: fadeIn 0.5s ease-out forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    .poster { width: 100%; height: 220px; border-radius: 12px; background-color: var(--surface-color); margin-bottom: 0.5rem; display: flex; justify-content: center; align-items: center; position: relative; }
+    .poster img { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; }
+    .poster.error::before { content: '\f03e'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; color: var(--text-muted-color); font-size: 3rem; }
+    .card-title { font-size: 0.95rem; margin-bottom: 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .download-btn { width: 100%; padding: 0.7rem; text-decoration: none; display: inline-block; border: none; border-radius: 8px; background-color: var(--secondary-color); color: white; font-weight: 600; font-size: 1rem; cursor: pointer; text-align: center; }
+    footer { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--surface-color); box-shadow: 0 -2px 10px rgba(0,0,0,0.3); z-index: 99; }
+    .bottom-nav { display: flex; justify-content: space-around; align-items: center; }
+    .nav-link { display: flex; flex-direction: column; align-items: center; justify-content: center; text-decoration: none; color: var(--text-muted-color); flex: 1; padding: 0.4rem 0; transition: color 0.2s; }
+    .nav-link i { font-size: 1.3rem; margin-bottom: 0.25rem; }
+    .nav-link span { font-size: 0.8rem; font-weight: 500; }
+    .nav-link.active, .nav-link:hover { color: var(--primary-color); }
+    .empty-state { width: 100%; grid-column: 1 / -1; text-align: center; padding: 2rem 0; color: var(--text-muted-color); }
+    .search-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(18, 18, 18, 0.9); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); z-index: 300; display: none; flex-direction: column; align-items: center; padding: 1rem; padding-top: 4rem; opacity: 0; transition: opacity 0.3s; }
+    .search-overlay.active { display: flex; opacity: 1; }
+    .search-container { width: 100%; max-width: 800px; position: relative; }
+    .close-search { position: absolute; top: -3rem; right: 0; font-size: 2.5rem; color: #fff; background: none; border: none; cursor: pointer; }
+    #searchInput { width: 100%; padding: 1rem; font-size: 1.2rem; border-radius: 12px; border: 2px solid var(--primary-color); background-color: var(--surface-color); color: var(--text-color); outline: none; }
+    #searchResults { margin-top: 1.5rem; width: 100%; max-height: calc(100vh - 12rem); overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <div id="app-container">
+        <header>
+            <button class="icon-btn" id="openNavBtn"><i class="fas fa-bars"></i></button>
+            <h1 class="logo">Flix<span>Movie</span></h1>
+            <div class="header-right">
+                <button class="icon-btn" id="openSearchBtn"><i class="fas fa-search"></i></button>
+                <button class="icon-btn" id="theme-toggler"><i class="fas fa-moon"></i></button>
+            </div>
+        </header>
+        
+        <main>
+            <section class="content-section" data-category="rank"><h2><i class="fas fa-trophy"></i> Top Ranked</h2><div class="media-scroller"></div></section>
+            <section class="content-section" data-category="movie"><h2><i class="fas fa-film"></i> Movies</h2><div class="media-scroller"></div></section>
+            <section class="content-section" data-category="anime"><h2><i class="fas fa-dragon"></i> Anime</h2><div class="media-scroller"></div></section>
+            <section class="content-section" data-category="wallpaper"><h2><i class="fas fa-image"></i> Wallpaper</h2><div class="media-scroller"></div></section>
+            <section class="content-section" data-category="other"><h2><i class="fas fa-photo-film"></i> Other</h2><div class="media-scroller"></div></section>
+        </main>
+        
+        <footer>
+            <nav class="bottom-nav">
+                <a href="#" class="nav-link active" data-target="home"><i class="fas fa-home"></i><span>Home</span></a>
+                <a href="#" class="nav-link" data-target="movie"><i class="fas fa-clapperboard"></i><span>Movie</span></a>
+                <a href="#" class="nav-link" data-target="anime"><i class="fas fa-ghost"></i><span>Anime</span></a>
+                <a href="#" class="nav-link" data-target="wallpaper"><i class="fas fa-image"></i><span>Wallpaper</span></a>
+                <a href="#" class="nav-link" data-target="other"><i class="fas fa-compass"></i><span>Explore</span></a>
+            </nav>
+        </footer>
+    </div>
+
+    <!-- Sidenav and Search Overlay -->
+    <div class="sidenav" id="mySidenav">
+        <a href="javascript:void(0)" class="closebtn" id="closeNavBtn">&times;</a>
+        <a href="https://t.me/FlixMovieAlltime" target="_blank"><i class="fab fa-telegram"></i> Telegram</a>
+        <a href="https://www.tiktok.com/@officialflixmovie" target="_blank"><i class="fab fa-tiktok"></i> TikTok</a>
+        <a href="https://www.youtube.com/@OfficialFlixMovie" target="_blank"><i class="fab fa-youtube"></i> YouTube</a>
+        <hr style="border-color: #444; margin: 10px 32px;">
+        <a href="mailto:officialflixmovie@gmail.com"><i class="fas fa-envelope"></i> Help</a>
+    </div>
+
+    <div id="search-overlay" class="search-overlay">
+        <div class="search-container">
+            <button class="close-search" id="closeSearchBtn">&times;</button>
+            <input type="text" id="searchInput" placeholder="আপনার পছন্দের মুভি খুঁজুন...">
+            <div id="searchResults" class="media-grid"></div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const CONTENT_KEY = 'flixMovieContent';
+        const THEME_KEY = 'flixMovieTheme';
+
+        // --- ডেটা এবং থিম ম্যানেজমেন্ট ---
+        const getStoredContent = () => {
+            try {
+                // localStorage থেকে ডেটা আনার সময় JSON পার্সিং এ সমস্যা হলে খালি অ্যারে রিটার্ন করবে।
+                // এতে অ্যাপ ক্র্যাশ করবে না।
+                return JSON.parse(localStorage.getItem(CONTENT_KEY)) || [];
+            } catch (error) {
+                console.error("Error parsing content from localStorage:", error);
+                return [];
+            }
+        };
+        const getTheme = () => localStorage.getItem(THEME_KEY) || 'dark';
+        const setTheme = (theme) => localStorage.setItem(THEME_KEY, theme);
+
+        // --- পারফরম্যান্সের জন্য ডিবাউন্স ফাংশন ---
+        // এই ফাংশনটি সার্চ ইনপুটে বারবার কল হওয়া আটকায়। ব্যবহারকারী টাইপ থামানোর পরেই কেবল সার্চ শুরু হয়।
+        function debounce(func, delay = 300) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    func.apply(this, args);
+                }, delay);
+            };
+        }
+
+        // --- থিম পরিবর্তন ---
+        function applyTheme(theme) {
+            const isLight = theme === 'light';
+            document.documentElement.classList.toggle('light-theme-body', isLight);
+            // body-তে আর আলাদা ক্লাস যোগ করার দরকার নেই, html ট্যাগই যথেষ্ট।
+            const themeIcon = document.querySelector('#theme-toggler i');
+            if (themeIcon) themeIcon.className = isLight ? 'fas fa-sun' : 'fas fa-moon';
+        }
+
+        document.getElementById('theme-toggler')?.addEventListener('click', () => {
+            const currentTheme = getTheme();
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            setTheme(newTheme);
+            applyTheme(newTheme);
+        });
+        
+        // --- সাইড ন্যাভিগেশন ---
+        const sidenav = document.getElementById('mySidenav');
+        const openNavBtn = document.getElementById('openNavBtn');
+        const closeNavBtn = document.getElementById('closeNavBtn');
+        const appContainer = document.getElementById('app-container');
+
+        openNavBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sidenav.style.width = '250px';
+            appContainer.classList.add('blur');
+        });
+
+        const closeSidenav = () => {
+            sidenav.style.width = '0';
+            appContainer.classList.remove('blur');
+        };
+
+        closeNavBtn.addEventListener('click', closeSidenav);
+        document.addEventListener('click', (event) => {
+            if (sidenav.style.width === '250px' && !sidenav.contains(event.target) && event.target !== openNavBtn) {
+                closeSidenav();
+            }
+        });
+
+        // --- মিডিয়া কার্ড তৈরি করার ফাংশন ---
+        function createMediaCard(item) {
+            const card = document.createElement('div');
+            card.className = 'media-card';
+            card.innerHTML = `
+                <div class="poster">
+                    <img src="${item.poster}" alt="${item.title}" loading="lazy" onerror="this.parentElement.classList.add('error'); this.style.display='none';">
+                </div>
+                <h3 class="card-title" title="${item.title}">${item.title}</h3>
+                <a href="${item.downloadLink}" class="download-btn" target="_blank">Download</a>`;
+            return card;
+        }
+
+        // --- ইউজার কন্টেন্ট রেন্ডার করার ফাংশন (অপ্টিমাইজ করা) ---
+        function renderUserContent() {
+            const allContent = getStoredContent();
+            document.querySelectorAll('.content-section').forEach(section => {
+                const category = section.dataset.category;
+                const container = section.querySelector('.media-scroller, .media-grid');
+                const categoryContent = allContent.filter(item => item.category === category);
+                
+                // DocumentFragment ব্যবহার করে পারফরম্যান্স বাড়ানো হয়েছে।
+                // এতে DOM-এ একবারেই সব কার্ড যোগ হয়, যা দ্রুততর।
+                const fragment = document.createDocumentFragment();
+
+                if (categoryContent.length === 0) {
+                    container.innerHTML = '<p class="empty-state">No items available.</p>';
+                } else {
+                    categoryContent.forEach((item, index) => {
+                        const card = createMediaCard(item);
+                        card.style.animationDelay = `${index * 0.05}s`;
+                        fragment.appendChild(card);
+                    });
+                    // আগের কন্টেন্ট মুছে নতুন কন্টেন্ট যোগ করা হচ্ছে।
+                    container.replaceChildren(fragment);
+                }
+            });
+        }
+        
+        // --- নিচের ন্যাভিগেশন বার ---
+        function initializeBottomNav() {
+            const navLinks = document.querySelectorAll('.bottom-nav .nav-link');
+            const contentSections = document.querySelectorAll('.content-section');
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const currentActive = document.querySelector('.bottom-nav .nav-link.active');
+                    if (currentActive) currentActive.classList.remove('active');
+                    link.classList.add('active');
+                    
+                    const target = link.dataset.target;
+                    contentSections.forEach(section => {
+                        const isVisible = (target === 'home') || (section.dataset.category === target);
+                        section.classList.toggle('hidden', !isVisible);
+                    });
+                    
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            });
+        }
+        
+        // --- সার্চ ফাংশন (অপ্টিমাইজ করা) ---
+        function initializeSearch() {
+            const openSearchBtn = document.getElementById('openSearchBtn');
+            const closeSearchBtn = document.getElementById('closeSearchBtn');
+            const searchOverlay = document.getElementById('search-overlay');
+            const searchInput = document.getElementById('searchInput');
+            const searchResultsContainer = document.getElementById('searchResults');
+            
+            openSearchBtn.addEventListener('click', () => {
+                searchOverlay.classList.add('active');
+                appContainer.classList.add('blur');
+                searchInput.focus(); // সার্চ খুললেই ইনপুট ফিল্ডে ফোকাস হবে
+            });
+
+            const closeSearch = () => {
+                searchOverlay.classList.remove('active');
+                appContainer.classList.remove('blur');
+                searchInput.value = '';
+                searchResultsContainer.innerHTML = '';
+            };
+
+            closeSearchBtn.addEventListener('click', closeSearch);
+            // সার্চের বাইরে ক্লিক করলে বন্ধ হয়ে যাবে
+            searchOverlay.addEventListener('click', (e) => {
+                if (e.target === searchOverlay) {
+                    closeSearch();
+                }
+            });
+
+            const performSearch = () => {
+                const query = searchInput.value.toLowerCase().trim();
+                if (!query) {
+                    searchResultsContainer.innerHTML = '';
+                    return;
+                }
+                
+                const results = getStoredContent().filter(item => item.title.toLowerCase().includes(query));
+                const fragment = document.createDocumentFragment();
+
+                if (results.length === 0) {
+                    searchResultsContainer.innerHTML = '<p class="empty-state">কোনো ফলাফল পাওয়া যায়নি।</p>';
+                } else {
+                    results.forEach(item => fragment.appendChild(createMediaCard(item)));
+                    searchResultsContainer.replaceChildren(fragment);
+                }
+            };
+            
+            // ডিবাউন্স ব্যবহার করে সার্চকে অপ্টিমাইজ করা হয়েছে
+            searchInput.addEventListener('input', debounce(performSearch, 300));
+        }
+
+        // --- অ্যাপ ইনিশিয়ালাইজেশন ---
+        function init() {
+            applyTheme(getTheme());
+            renderUserContent();
+            initializeBottomNav();
+            initializeSearch();
+            // প্রথমবার লোড হওয়ার সময় 'Home' ট্যাব সক্রিয় থাকবে
+            document.querySelector('.nav-link[data-target="home"]').click();
+        }
+
+        init();
+    });
+    </script>
+</body>
+</html>
